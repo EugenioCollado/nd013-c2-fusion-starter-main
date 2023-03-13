@@ -166,29 +166,24 @@ def bev_from_pcl(lidar_pcl, configs):
     print("student task ID_S2_EX2")
 
     ## step 1 : create a numpy array filled with zeros which has the same dimensions as the BEV map
-    intensity_map = np.zeros((configs.bev_height + 1, configs.bev_width + 1))
+    intensity_map = np.zeros((configs.bev_height, configs.bev_width))
     
     # step 2 : re-arrange elements in lidar_pcl_cpy by sorting first by x, then y, then -z (use numpy.lexsort)
-    
     idx_height = np.lexsort((-lidar_pcl_cpy[:, 2], lidar_pcl_cpy[:, 1], lidar_pcl_cpy[:, 0]))
-    lidar_pcl_hei = lidar_pcl_cpy[idx_height]
+    lidar_pcl_top = lidar_pcl_cpy[idx_height]
 
     ## step 3 : extract all points with identical x and y such that only the top-most z-coordinate is kept (use numpy.unique) 
     ## also, store the number of points per x,y-cell in a variable named "counts" for use in the next task
-    
-    _, idx_height_unique = np.unique(lidar_pcl_hei[:, 0:2], axis=0, return_index=True)
-    counts = np.zeros((configs.bev_height + 1, configs.bev_width + 1))
-    for point in lidar_pcl_hei:
-        counts[np.int_(point[0]), np.int_(point[1])] += 1
-    lidar_pcl_hei = lidar_pcl_hei[idx_height_unique]
+    _, idx_height_unique, counts = np.unique(lidar_pcl_top[:, 0:2], axis=0, return_index=True , return_counts=True)
+    lidar_pcl_top = lidar_pcl_top[idx_height_unique]
 
     ## step 4 : assign the intensity value of each unique entry in lidar_top_pcl to the intensity map 
     ##          make sure that the intensity is scaled in such a way that objects of interest (e.g. vehicles) are clearly visible    
     ##          also, make sure that the influence of outliers is mitigated by normalizing intensity on the difference between the max. and min. value within the point cloud
     
-    idx_limit = lidar_pcl_hei[:,3]>1.0
-    lidar_pcl_hei[idx_limit,3] = 1.0
-    intensity_map[np.int_(lidar_pcl_hei[:, 0]), np.int_(lidar_pcl_hei[:, 1])] = lidar_pcl_hei[:, 3] / (np.amax(lidar_pcl_hei[:, 3])-np.amin(lidar_pcl_hei[:, 3]))
+    idx_limit = lidar_pcl_top[:,3]>1.0
+    lidar_pcl_top[idx_limit,3] = 1.0
+    intensity_map[np.int_(lidar_pcl_top[:, 0]), np.int_(lidar_pcl_top[:, 1])] = lidar_pcl_top[:, 3] / (np.amax(lidar_pcl_top[:, 3])-np.amin(lidar_pcl_top[:, 3]))
     ## step 5 : temporarily visualize the intensity map using OpenCV to make sure that vehicles separate well from the background
     
     img_intensity = intensity_map * 256
@@ -210,15 +205,17 @@ def bev_from_pcl(lidar_pcl, configs):
     print("student task ID_S2_EX3")
 
     ## step 1 : create a numpy array filled with zeros which has the same dimensions as the BEV map
-    hei_map = np.zeros((configs.bev_height + 1, configs.bev_width + 1))
+    height_map = np.zeros((configs.bev_height + 1, configs.bev_width + 1))
 
     ## step 2 : assign the height value of each unique entry in lidar_top_pcl to the height map 
     ##          make sure that each entry is normalized on the difference between the upper and lower height defined in the config file
     ##          use the lidar_pcl_top data structure from the previous task to access the pixels of the height_map
-    hei_map[np.int_(lidar_pcl_hei[:, 0]), np.int_(lidar_pcl_hei[:, 1])] = lidar_pcl_hei[:, 2] / float(configs.lim_z[1] - configs.lim_z[0])
+    height_map[np.int_(lidar_pcl_top[:, 0]), np.int_(lidar_pcl_top[:, 1])] = lidar_pcl_top[:, 2] / float(configs.lim_z[1] - configs.lim_z[0])
     ## step 3 : temporarily visualize the intensity map using OpenCV to make sure that vehicles separate well from the background
+    img_height = height_map * 256
+    img_height = img_height.astype(np.uint8)
     while (1):
-        cv2.imshow('img_height', hei_map)
+        cv2.imshow('img_height', img_height)
         if cv2.waitKey(10) & 0xFF == 27:
             break
     cv2.destroyAllWindows()
@@ -226,12 +223,6 @@ def bev_from_pcl(lidar_pcl, configs):
 
     #######
     ####### ID_S2_EX3 END #######       
-
-    # TODO remove after implementing all of the above steps
-    lidar_pcl_cpy = []
-    lidar_pcl_top = []
-    height_map = []
-    intensity_map = []
 
     # Compute density layer of the BEV map
     density_map = np.zeros((configs.bev_height + 1, configs.bev_width + 1))
