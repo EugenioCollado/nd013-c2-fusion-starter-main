@@ -141,8 +141,8 @@ def plot_tracks(fig, ax, ax2, track_list, meas_list, lidar_labels, lidar_labels_
         ax.scatter(-1*meas.z[1], meas.z[0], color='blue', marker='.', label='measurement')
     
     # maximize window        
-    mng = plt.get_current_fig_manager()
-    mng.frame.Maximize(True)
+    #mng = plt.get_current_fig_manager()
+    #mng.frame.Maximize(True)
     
     # axis 
     ax.set_xlabel('y [m]')
@@ -216,8 +216,8 @@ def plot_rmse(manager, all_labels, configs_det):
                     + '{:.2f}'.format(rmse_sum) + ')')
     
     # maximize window     
-    mng = plt.get_current_fig_manager()
-    mng.frame.Maximize(True)
+    #mng = plt.get_current_fig_manager()
+    #mng.frame.Maximize(True)
     ax.set_ylim(0,1)
     if plot_empty: 
         print('No confirmed tracks found to plot RMSE!')
